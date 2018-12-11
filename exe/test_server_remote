@@ -1,0 +1,58 @@
+#! /usr/bin/env ruby
+
+$: << 'test'
+require 'bundler/setup'
+require 'socket'
+require 'terminal-notifier' if ENV['NOTIFY']
+
+module TestServer
+  class << self
+    def client
+      @client ||= TCPSocket.new(ENV['HOST'], ENV['PORT'])
+    end
+
+    def server
+      @server ||= TCPServer.new(ENV['HOST'], ENV['PORT'])
+    end
+
+    def test(files)
+      client.sendmsg files.join(' ')
+    end
+
+    def start!
+      puts "Initializing TestServer with pid #{$$}..."
+      require 'test_helper'
+      puts "Ready!"
+      loop do
+        conn = server.accept
+        files, _ = conn.recvmsg
+        pid = fork do
+          puts "> Testing files: #{files}"
+          if files == ":all".freeze
+            all_glob = ENV['ALL_GLOB'] || 'test/unit/*_test.rb'
+            Dir.glob(all_glob).each { |f| load f }
+          else
+            files.split(' ').each { |f| load f }
+          end
+        end
+        _, status = Process.wait2(pid)
+        if ENV['NOTIFY']
+          msg = (status.exitstatus == 0) ? "Tests passed :)" : "Warning! Tests failed :("
+          TerminalNotifier.notify(msg)
+        end
+      end
+    end
+  end
+end
+
+queue = ARGV
+until queue.empty?
+  case queue.shift
+  when "--serve"
+    TestServer.start!
+  when "--test"
+    TestServer.test(queue)
+    queue = []
+  end
+end
+
