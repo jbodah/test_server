@@ -1,5 +1,4 @@
 require "test_server/version"
-
 require 'socket'
 
 module TestServer
