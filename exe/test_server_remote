@@ -35,11 +35,11 @@ OptionParser.new do |opts|
     options[:notify_on_fail] = notify
   end
 
-  opts.on("--port", Integer, "Server's port (default: 4545)") do |port|
+  opts.on("--port PORT", Integer, "Server's port (default: 4545)") do |port|
     options[:port] = port
   end
 
-  opts.on("--host", "Server's host (default: localhost)") do |host|
+  opts.on("--host HOST", "Server's host (default: \"localhost\")") do |host|
     options[:host] = host
   end
 end.parse!
