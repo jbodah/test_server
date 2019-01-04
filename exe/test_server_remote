@@ -2,57 +2,47 @@
 
 $: << 'test'
 require 'bundler/setup'
-require 'socket'
-require 'terminal-notifier' if ENV['NOTIFY']
+require 'test_server'
+require 'optparse'
 
-module TestServer
-  class << self
-    def client
-      @client ||= TCPSocket.new(ENV['HOST'], ENV['PORT'])
-    end
+options = {
+  remote: true,
+  host: "localhost",
+  port: 4545
+}
 
-    def server
-      @server ||= TCPServer.new(ENV['HOST'], ENV['PORT'])
-    end
+OptionParser.new do |opts|
+  opts.banner = "Usage: test_server_remote [OPTIONS] [TEST...]"
 
-    def test(files)
-      client.sendmsg files.join(' ')
-    end
-
-    def start!
-      puts "Initializing TestServer with pid #{$$}..."
-      require 'test_helper'
-      puts "Ready!"
-      loop do
-        conn = server.accept
-        files, _ = conn.recvmsg
-        pid = fork do
-          puts "> Testing files: #{files}"
-          if files == ":all".freeze
-            all_glob = ENV['ALL_GLOB'] || 'test/unit/*_test.rb'
-            Dir.glob(all_glob).each { |f| load f }
-          else
-            files.split(' ').each { |f| load f }
-          end
-        end
-        _, status = Process.wait2(pid)
-        if ENV['NOTIFY']
-          msg = (status.exitstatus == 0) ? "Tests passed :)" : "Warning! Tests failed :("
-          TerminalNotifier.notify(msg)
-        end
-      end
-    end
+  opts.on("--serve", "Boot the server") do |mode|
+    options[:mode] = :serve
   end
-end
 
-queue = ARGV
-until queue.empty?
-  case queue.shift
-  when "--serve"
-    TestServer.start!
-  when "--test"
-    TestServer.test(queue)
-    queue = []
+  opts.on("--test", "Push a test to the server") do |mode|
+    options[:mode] = :push
   end
-end
 
+  opts.on("--notify", "Send system notification based on test result") do |notify|
+    options[:notify_on_fail] = notify
+    options[:notify_on_pass] = notify
+  end
+
+  opts.on("--notify-on-pass", "Send system notification when the test passes") do |notify|
+    options[:notify_on_pass] = notify
+  end
+
+  opts.on("--notify-on-fail", "Send system notification when the test fails") do |notify|
+    options[:notify_on_fail] = notify
+  end
+
+  opts.on("--port", Integer, "Server's port (default: 4545)") do |port|
+    options[:port] = port
+  end
+
+  opts.on("--host", "Server's host (default: localhost)") do |host|
+    options[:host] = host
+  end
+end.parse!
+
+options[:files] = ARGV
+TestServer.run!(options)
