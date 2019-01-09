@@ -6,7 +6,9 @@ require 'optparse'
 
 options = {
   remote: false,
-  sock: "test.sock"
+  sock: "test.sock",
+  preload: %(require "test_helper"),
+  after_fork: ""
 }
 
 OptionParser.new do |opts|
@@ -35,6 +37,14 @@ OptionParser.new do |opts|
 
   opts.on("--socket", "Socket file to use") do |sock|
     options[:sock] = sock
+  end
+
+  opts.on("--preload CODE", "Ruby code to run before forking (default: \"require 'test_helper'\")") do |code|
+    options[:preload] = code
+  end
+
+  opts.on("--after-fork CODE", "Ruby code to run immediately after forking (default: \"\")") do |code|
+    options[:after_fork] = code
   end
 end.parse!
 

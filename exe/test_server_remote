@@ -7,7 +7,9 @@ require 'optparse'
 options = {
   remote: true,
   host: "localhost",
-  port: 4545
+  port: 4545,
+  preload: %(require "test_helper"),
+  after_fork: ""
 }
 
 OptionParser.new do |opts|
@@ -40,6 +42,14 @@ OptionParser.new do |opts|
 
   opts.on("--host HOST", "Server's host (default: \"localhost\")") do |host|
     options[:host] = host
+  end
+
+  opts.on("--preload CODE", "Ruby code to run before forking (default: \"require 'test_helper'\")") do |code|
+    options[:preload] = code
+  end
+
+  opts.on("--after-fork CODE", "Ruby code to run immediately after forking (default: \"\")") do |code|
+    options[:after_fork] = code
   end
 end.parse!
 

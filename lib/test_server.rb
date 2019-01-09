@@ -21,13 +21,14 @@ module TestServer
     def serve!(options)
       with_server(options) do |server|
         puts "Initializing TestServer with pid #{$$}..."
-        require 'test_helper'
+        eval options[:preload] if options[:preload].length > 0
         puts "Ready!"
         loop do
           conn = server.accept
           files, _ = conn.recvmsg
           pid = fork do
             puts "> Testing files: #{files}"
+            eval options[:after_fork] if options[:after_fork].length > 0
             if files == ":all".freeze
               all_glob = ENV['ALL_GLOB'] || 'test/**/*_test.rb'
               Dir.glob(all_glob).each { |f| load f }
