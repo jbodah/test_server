@@ -35,7 +35,7 @@ OptionParser.new do |opts|
     options[:notify_on_fail] = notify
   end
 
-  opts.on("--socket", "Socket file to use") do |sock|
+  opts.on("--socket FILE", "Socket file to use") do |sock|
     options[:sock] = sock
   end
 
