@@ -29,7 +29,7 @@ module TestServer
           pid = fork do
             puts "> Testing files: #{files}"
             if files == ":all".freeze
-              all_glob = ENV['ALL_GLOB'] || 'test/unit/*_test.rb'
+              all_glob = ENV['ALL_GLOB'] || 'test/**/*_test.rb'
               Dir.glob(all_glob).each { |f| load f }
             else
               files.split(' ').each { |f| load f }
