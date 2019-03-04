@@ -15,6 +15,17 @@ module TestServer
     def test(options)
       with_client(options) do |client|
         client.sendmsg options[:files].join(' ')
+
+        if options[:forward_exit_code]
+          exit_code, _ = client.recvmsg
+          exit_code = exit_code.to_i
+          if exit_code == 0
+            notify("Tests passed :)") if options[:notify_on_pass]
+          else
+            notify("Warning! Tests failed :(") if options[:notify_on_fail]
+          end
+          exit(exit_code)
+        end
       end
     end
 
@@ -37,10 +48,16 @@ module TestServer
             end
           end
           _, status = Process.wait2(pid)
-          if status.exitstatus == 0
-            notify("Tests passed :)") if options[:notify_on_pass]
+          exit_code = status.exitstatus
+
+          if options[:forward_exit_code]
+            conn.sendmsg exit_code.to_s
           else
-            notify("Warning! Tests failed :(") if options[:notify_on_fail]
+            if exit_code == 0
+              notify("Tests passed :)") if options[:notify_on_pass]
+            else
+              notify("Warning! Tests failed :(") if options[:notify_on_fail]
+            end
           end
         end
       end

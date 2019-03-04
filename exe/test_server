@@ -46,6 +46,10 @@ OptionParser.new do |opts|
   opts.on("--after-fork CODE", "Ruby code to run immediately after forking (default: \"\")") do |code|
     options[:after_fork] = code
   end
+
+  opts.on("--forward-exit-code", "Calling process will exit with the fork child's exit code") do |forward_exit_code|
+    options[:forward_exit_code] = forward_exit_code
+  end
 end.parse!
 
 options[:files] = ARGV
